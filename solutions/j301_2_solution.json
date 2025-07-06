@@ -1,0 +1,278 @@
+{
+  "metadata": {
+    "project_file": "j30_json/j301_2.json",
+    "timestamp": "2025-07-06T19:40:37.386478",
+    "solver": "DatalessProjectScheduler",
+    "version": "1.0"
+  },
+  "solution": {
+    "start_times": {
+      "START": 0.001,
+      "Activity_1": 0.001,
+      "Activity_2": 0.0,
+      "Activity_3": 0.0,
+      "Activity_4": 10.0,
+      "Activity_5": 11.0,
+      "Activity_6": 7.007,
+      "Activity_7": 13.011,
+      "Activity_8": 10.003,
+      "Activity_9": 2.015,
+      "Activity_10": 13.017,
+      "Activity_11": 7.081,
+      "Activity_12": 14.0,
+      "Activity_13": 20.01,
+      "Activity_14": 10.018,
+      "Activity_15": 14.0,
+      "Activity_16": 11.0,
+      "Activity_17": 14.0,
+      "Activity_18": 13.009,
+      "Activity_19": 24.0,
+      "Activity_20": 22.023,
+      "Activity_21": 7.067,
+      "Activity_22": 21.0,
+      "Activity_23": 11.093,
+      "Activity_24": 23.014,
+      "Activity_25": 24.0,
+      "Activity_26": 33.0,
+      "Activity_27": 20.027,
+      "Activity_28": 21.0,
+      "Activity_29": 34.0,
+      "Activity_30": 31.0,
+      "END": 42.0
+    },
+    "finish_times": {
+      "START": 0.001,
+      "Activity_1": 2.001,
+      "Activity_2": 10.0,
+      "Activity_3": 7.0,
+      "Activity_4": 11.0,
+      "Activity_5": 14.0,
+      "Activity_6": 13.007,
+      "Activity_7": 15.011,
+      "Activity_8": 20.003,
+      "Activity_9": 7.015,
+      "Activity_10": 22.017,
+      "Activity_11": 11.081,
+      "Activity_12": 18.0,
+      "Activity_13": 22.01,
+      "Activity_14": 14.018,
+      "Activity_15": 24.0,
+      "Activity_16": 21.0,
+      "Activity_17": 21.0,
+      "Activity_18": 23.009,
+      "Activity_19": 31.0,
+      "Activity_20": 24.023,
+      "Activity_21": 8.067,
+      "Activity_22": 23.0,
+      "Activity_23": 13.093,
+      "Activity_24": 25.014,
+      "Activity_25": 33.0,
+      "Activity_26": 34.0,
+      "Activity_27": 24.027,
+      "Activity_28": 28.0,
+      "Activity_29": 42.0,
+      "Activity_30": 40.0,
+      "END": 42.0
+    },
+    "makespan": 42.0
+  },
+  "metrics": {
+    "final_solution": {
+      "makespan": 42.0,
+      "max_violation": 0.001,
+      "mean_violation": 0.0,
+      "feasible": true,
+      "solution_epoch": 1839,
+      "total_epochs_run": 3000,
+      "feasible_candidates_found": 1161
+    },
+    "resource_analysis": {
+      "total_activities": 32,
+      "activities_with_duration": 30,
+      "max_activity_duration": 10.0,
+      "total_work_content": 160.0
+    }
+  },
+  "activity_schedule": [
+    {
+      "name": "Activity_1",
+      "start": 0.001,
+      "finish": 2.001,
+      "duration": 2.0
+    },
+    {
+      "name": "Activity_2",
+      "start": 0.0,
+      "finish": 10.0,
+      "duration": 10.0
+    },
+    {
+      "name": "Activity_3",
+      "start": 0.0,
+      "finish": 7.0,
+      "duration": 7.0
+    },
+    {
+      "name": "Activity_4",
+      "start": 10.0,
+      "finish": 11.0,
+      "duration": 1.0
+    },
+    {
+      "name": "Activity_5",
+      "start": 11.0,
+      "finish": 14.0,
+      "duration": 3.0
+    },
+    {
+      "name": "Activity_6",
+      "start": 7.007,
+      "finish": 13.007,
+      "duration": 6.0
+    },
+    {
+      "name": "Activity_7",
+      "start": 13.011,
+      "finish": 15.011,
+      "duration": 2.0
+    },
+    {
+      "name": "Activity_8",
+      "start": 10.003,
+      "finish": 20.003,
+      "duration": 10.0
+    },
+    {
+      "name": "Activity_9",
+      "start": 2.015,
+      "finish": 7.015,
+      "duration": 5.0
+    },
+    {
+      "name": "Activity_10",
+      "start": 13.017,
+      "finish": 22.017,
+      "duration": 9.0
+    },
+    {
+      "name": "Activity_11",
+      "start": 7.081,
+      "finish": 11.081,
+      "duration": 4.0
+    },
+    {
+      "name": "Activity_12",
+      "start": 14.0,
+      "finish": 18.0,
+      "duration": 4.0
+    },
+    {
+      "name": "Activity_13",
+      "start": 20.01,
+      "finish": 22.01,
+      "duration": 2.0
+    },
+    {
+      "name": "Activity_14",
+      "start": 10.018,
+      "finish": 14.018,
+      "duration": 4.0
+    },
+    {
+      "name": "Activity_15",
+      "start": 14.0,
+      "finish": 24.0,
+      "duration": 10.0
+    },
+    {
+      "name": "Activity_16",
+      "start": 11.0,
+      "finish": 21.0,
+      "duration": 10.0
+    },
+    {
+      "name": "Activity_17",
+      "start": 14.0,
+      "finish": 21.0,
+      "duration": 7.0
+    },
+    {
+      "name": "Activity_18",
+      "start": 13.009,
+      "finish": 23.009,
+      "duration": 10.0
+    },
+    {
+      "name": "Activity_19",
+      "start": 24.0,
+      "finish": 31.0,
+      "duration": 7.0
+    },
+    {
+      "name": "Activity_20",
+      "start": 22.023,
+      "finish": 24.023,
+      "duration": 2.0
+    },
+    {
+      "name": "Activity_21",
+      "start": 7.067,
+      "finish": 8.067,
+      "duration": 1.0
+    },
+    {
+      "name": "Activity_22",
+      "start": 21.0,
+      "finish": 23.0,
+      "duration": 2.0
+    },
+    {
+      "name": "Activity_23",
+      "start": 11.093,
+      "finish": 13.093,
+      "duration": 2.0
+    },
+    {
+      "name": "Activity_24",
+      "start": 23.014,
+      "finish": 25.014,
+      "duration": 2.0
+    },
+    {
+      "name": "Activity_25",
+      "start": 24.0,
+      "finish": 33.0,
+      "duration": 9.0
+    },
+    {
+      "name": "Activity_26",
+      "start": 33.0,
+      "finish": 34.0,
+      "duration": 1.0
+    },
+    {
+      "name": "Activity_27",
+      "start": 20.027,
+      "finish": 24.027,
+      "duration": 4.0
+    },
+    {
+      "name": "Activity_28",
+      "start": 21.0,
+      "finish": 28.0,
+      "duration": 7.0
+    },
+    {
+      "name": "Activity_29",
+      "start": 34.0,
+      "finish": 42.0,
+      "duration": 8.0
+    },
+    {
+      "name": "Activity_30",
+      "start": 31.0,
+      "finish": 40.0,
+      "duration": 9.0
+    }
+  ]
+}

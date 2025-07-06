@@ -15,7 +15,6 @@ Date: 06/July/2025
 
 import torch
 import torch.optim as optim
-import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -27,21 +26,33 @@ class DatalessProjectScheduler:
         self,
         durations,
         precedences,
-        beta=5.0,                  # smooth-max temperature
-        penalty_init=10.0,         # initial λ for precedence violations
-        penalty_anneal=1.5,        # multiply λ every `anneal_every` epochs
-        anneal_every=50,
-        early_stop_tol=1e-6,        # early stopping when max violation < this
-        enable_early_stopping=False,  # easy switch to disable early stopping
-        penalty_reduction_factor=0.8,   # more aggressive reduction rate when violations stable
-        lookback_window=20,       # epochs to look back for trend analysis
-        violation_reduction_threshold=0.0001,  # reduce λ only when violations < this
-        violation_escalation_threshold=0.001,  # escalate λ when violations > this
-        recovery_sensitivity=2.0,  # trigger recovery when violations increase by this factor
-        beta_sharpening_threshold=2.0,  # trigger β doubling when violations < this
-        penalty_beta_threshold=1000,  # trigger β doubling when λ > this
-        trend_window=10,           # epochs to look back for recovery detection
-        min_history_for_recovery=30,  # minimum epochs before recovery mechanism activates
+        # Conservative starts
+        beta=5.0,
+        penalty_init=10.0,
+        
+        # Less aggressive adaptive mechanisms
+        beta_sharpening_threshold=0.1,        # Wait until violations much smaller
+        violation_escalation_threshold=0.01,   # Less aggressive λ escalation  
+        recovery_sensitivity=3.0,             # Less sensitive recovery
+        penalty_beta_threshold=10000,         # Higher threshold for β sharpening
+        
+        # Penalty reduction (make it more reluctant)
+        penalty_reduction_factor=0.95,        # Reduce λ more slowly (was 0.9)
+        violation_reduction_threshold=1e-5,   # Much stricter threshold to reduce λ (was 1e-4)
+        
+        # Trend analysis (make it more stable)
+        lookback_window=50,                   # Longer trend analysis (was 20)
+        trend_window=20,                      # Longer recovery detection (was 10)  
+        min_history_for_recovery=100,         # Wait longer before recovery kicks in (was 30)
+        
+        # Legacy parameters (probably not used but keep conservative)
+        penalty_anneal=1.2,                   # Slower escalation if used (was 1.5)
+        anneal_every=100,                     # Less frequent if used (was 50)
+        
+        # Your settings
+        feasible_threshold=1e-3,
+        early_stop_tol=0.5e-3,
+        enable_early_stopping=False,
         device="cpu"
     ):
         """
@@ -49,6 +60,7 @@ class DatalessProjectScheduler:
         precedences : list of (pred_idx, succ_idx) tuples
         
         Key hyperparameters for adaptive penalty method:
+        - feasible_threshold: store candidates when max_viol < this (default: 1e-6)
         - violation_reduction_threshold: reduce λ only when violations < this (default: 0.001)
         - violation_escalation_threshold: escalate λ when violations > this (default: 0.01)
         - recovery_sensitivity: trigger recovery when violations increase by this factor (default: 2.0)
@@ -94,7 +106,7 @@ class DatalessProjectScheduler:
         
         # feasible solution tracking
         self.feasible_candidates = []
-        self.feasible_threshold = 1e-6  # Store candidates when max_viol < this
+        self.feasible_threshold = feasible_threshold  # Store candidates when max_viol < this
 
         # utility: index of START assumed 0
         self.start_idx = 0
@@ -147,22 +159,23 @@ class DatalessProjectScheduler:
         viol_hist, lambda_hist = [], []
         max_viol_hist          = []
         gnorm_hist             = []
-        PENALTY_CAP = 100_000_000
+        PENALTY_CAP = 10_000_000  # 1e7 - conservative cap to prevent FP32 numerical issues
 
         for ep in range(epochs):
             opt.zero_grad()
             loss, span, viol_mean, viol_raw = self.forward()
             loss.backward()
 
-            # Gradient clipping to prevent explosion
-            torch.nn.utils.clip_grad_norm_(self.raw_times, max_norm=10.0)
+            # No gradient clipping - let Adam handle large gradients naturally
+            # (Previous clipping at 10.0 was destroying penalty signals when λ > 1e6)
             
             gnorm = torch.norm(self.raw_times.grad).item()
             opt.step()
 
-            # ── 1️⃣  Adaptive λ management ─────────────────────────────────────
-            # Track violation history for trend analysis
-            self.viol_history.append(viol_mean.item())
+            # ── 1️⃣  Adaptive λ management (based on MAX violations) ─────────────────────────────────────
+            # Track MAX violation history for trend analysis (not mean - max determines feasibility!)
+            max_viol = torch.max(viol_raw).item()
+            self.viol_history.append(max_viol)
             
             if len(self.viol_history) >= self.lookback_window:
                 # Calculate violation improvement rate over lookback window
@@ -188,30 +201,31 @@ class DatalessProjectScheduler:
                         old_penalty = self.penalty
                         self.penalty = min(self.penalty * 2, PENALTY_CAP)
 
-                    # If violations are small and stable, reduce penalty (with safety valve)
+                    # If MAX violations are small and stable, reduce penalty (with safety valve)
                     elif recent_avg < self.violation_reduction_threshold:
                         old_penalty = self.penalty
                         self.penalty = max(self.penalty * self.penalty_reduction_factor, min_penalty)
 
-                    # If violations are moderate to large, escalate aggressively
-                    elif viol_mean.item() > self.violation_escalation_threshold and self.penalty < PENALTY_CAP:
+                    # If MAX violations are moderate to large, escalate aggressively
+                    elif max_viol > self.violation_escalation_threshold and self.penalty < PENALTY_CAP:
                         self.penalty *= 2
                 # Standard escalation for early epochs
-                elif viol_mean.item() > self.violation_escalation_threshold and self.penalty < PENALTY_CAP:
+                elif max_viol > self.violation_escalation_threshold and self.penalty < PENALTY_CAP:
                     self.penalty *= 2
             else:
                 # Very early epochs (before lookback window): use original escalation logic
-                if viol_mean.item() > self.violation_escalation_threshold and self.penalty < PENALTY_CAP:
+                if max_viol > self.violation_escalation_threshold and self.penalty < PENALTY_CAP:
                     self.penalty *= 2
 
-            # ── 2️⃣  β sharpening  (as soon as λ big OR slack small) ──────────
-            if ((self.penalty > self.penalty_beta_threshold) or (viol_mean.item() < self.beta_sharpening_threshold)) and self.beta < 1e4:
+            # ── 2️⃣  β sharpening  (as soon as λ big OR max violations small) ──────────
+            if ((self.penalty > self.penalty_beta_threshold) or (max_viol < self.beta_sharpening_threshold)) and self.beta < 1e4:
                 self.beta *= 2
 
             # ── 3️⃣  LR reheating once λ has frozen  ──────────────────────────
-            if self.penalty >= PENALTY_CAP and (ep + 1) % 50 == 0:
-                for g in opt.param_groups:
-                    g["lr"] *= 1.1            # small boost to keep Adam moving
+            # DISABLED: Testing if LR reheating causes violation spikes
+            # if self.penalty >= PENALTY_CAP and (ep + 1) % 50 == 0:
+            #     for g in opt.param_groups:
+            #         g["lr"] *= 1.1            # small boost to keep Adam moving
 
             # ---- history logging --------------------------------------------
             loss_hist.append(loss.item())
@@ -221,7 +235,6 @@ class DatalessProjectScheduler:
             gnorm_hist.append(gnorm)
 
             # ── 4️⃣  Store feasible candidates and early stopping ─────────────────
-            max_viol = torch.max(viol_raw).item()
             max_viol_hist.append(max_viol)
             
             # Store feasible candidate when violations are essentially zero
@@ -294,12 +307,9 @@ class DatalessProjectScheduler:
             # We need to find raw_times that produce the desired start_times
             # Simple approach: use inverse softplus (log(exp(x) - 1)) and add offset
             
-            # Add small offset to avoid log(0)
-            start_times_offset = start_times + 1e-8
-            
-            # Inverse softplus: log(exp(x) - 1) ≈ x for large x, log(x) for small x
-            # For numerical stability, we'll use a simpler approach
-            raw_times_est = torch.log(torch.exp(start_times_offset) - 1.0 + 1e-8)
+            # Inverse softplus: log(exp(x + ε) - 1) with epsilon inside exp for numerical stability
+            # This prevents log(0) even for tiny start times
+            raw_times_est = torch.log(torch.exp(start_times + 1e-6) - 1.0)
             
             # Update the raw_times parameter
             self.raw_times.data = raw_times_est
@@ -374,6 +384,76 @@ class DatalessProjectScheduler:
         ax.set_yticks(range(self.n)); ax.set_yticklabels(names); ax.invert_yaxis()
         ax.set_xlabel("time"); ax.set_title("Gantt Chart")
         plt.tight_layout(); plt.show()
+
+    # Add a new simplified solve method
+    def solve_simple(self, epochs: int = 400, lr: float = 0.1, verbose: bool = True, fixed_penalty: float = 10_000_000):
+        """
+        Simplified solver with fixed high penalty - no complex adaptive mechanism.
+        Use this when violations plateau and adaptive λ becomes useless.
+        """
+        self.penalty = fixed_penalty  # Set high penalty from start
+        opt = torch.optim.Adam([self.raw_times], lr=lr)
+        
+        loss_hist, span_hist   = [], []
+        viol_hist, lambda_hist = [], []
+        max_viol_hist          = []
+        gnorm_hist             = []
+        
+        for ep in range(epochs):
+            opt.zero_grad()
+            loss, span, viol_mean, viol_raw = self.forward()
+            loss.backward()
+            
+            # No gradient clipping - let Adam handle large gradients naturally
+            gnorm = torch.norm(self.raw_times.grad).item()
+            opt.step()
+            
+            # Simple β sharpening when max violations get small
+            max_viol = torch.max(viol_raw).item()
+            if max_viol < 0.1 and self.beta < 1e4:
+                self.beta *= 2
+            
+            # ---- history logging --------------------------------------------
+            loss_hist.append(loss.item())
+            span_hist.append(span.item())
+            viol_hist.append(viol_mean.item())
+            lambda_hist.append(self.penalty)
+            gnorm_hist.append(gnorm)
+            
+            # ── Store feasible candidates (with relaxed threshold) ─────────────────
+            max_viol_hist.append(max_viol)
+            
+            # Store "practical feasible" candidates when violations < 0.1 time units
+            if max_viol < 0.1:  # Much more relaxed threshold
+                current_sol = self.solution()
+                candidate = {
+                    'epoch': ep,
+                    'makespan': current_sol['makespan'],
+                    'start_times': current_sol['start'].copy(),
+                    'end_times': current_sol['end'].copy(),
+                    'max_violation': max_viol,
+                    'mean_violation': viol_mean.item()
+                }
+                self.feasible_candidates.append(candidate)
+            
+            if verbose and ep % 100 == 0:
+                print(f"ep {ep:4d} | span {span.item():6.2f} | "
+                      f"viol {viol_mean.item():.2e} | λ {self.penalty:.1e} | "
+                      f"∥grad∥ {gnorm:.2f}")
+        
+        # Select and restore best candidate
+        selected_candidate = self.select_best_candidate(verbose)
+        if selected_candidate is not None:
+            self.restore_candidate(selected_candidate)
+            self.best_solution = selected_candidate
+            if verbose:
+                print(f"✓ BEST SOLUTION: epoch {selected_candidate['epoch']}, "
+                      f"makespan {selected_candidate['makespan']:.3f}, "
+                      f"max_viol {selected_candidate['max_violation']:.2e}")
+        else:
+            self.best_solution = None
+        
+        return (loss_hist, span_hist, viol_hist, lambda_hist, gnorm_hist, max_viol_hist)
 
 
 # Example usage and basic validation

@@ -62,7 +62,7 @@ class SolutionAnalyzer:
                 'makespan': round(float(sol['makespan']), 3),
                 'max_violation': round(final_max_viol, 6),
                 'mean_violation': round(final_mean_viol, 6),
-                'feasible': bool(final_max_viol < 1e-6),
+                'feasible': bool(final_max_viol < self.scheduler.feasible_threshold),
                 'solution_epoch': int(best_viol_epoch),
                 'total_epochs_run': len(span_hist),
                 'feasible_candidates_found': num_feasible_candidates
@@ -180,7 +180,7 @@ def save_fig(fig, fname):
     print(f"[saved] {fname}")
 
 
-def save_convergence(loss, span, viol, lam, gnorm, max_viol, fname, early_stop_tol=0.01):
+def save_convergence(loss, span, lam, gnorm, max_viol, fname, early_stop_tol=0.01, early_stopping_enabled=False, feasible_threshold=1e-6):
     os.makedirs(os.path.dirname(fname), exist_ok=True)
     fig, axs = plt.subplots(2, 2, figsize=(12, 8), sharex=True)
 
@@ -194,10 +194,16 @@ def save_convergence(loss, span, viol, lam, gnorm, max_viol, fname, early_stop_t
     axs[0,1].set_title("Makespan", fontsize=12, fontweight='bold')
     axs[0,1].grid(alpha=.3)
 
-    # Violations (log scale)
-    axs[1,0].semilogy(viol, color="tab:green", alpha=0.8, linewidth=1.5, label="Mean")
+    # Violations (log scale) - only show max violations (determines feasibility)
     axs[1,0].semilogy(max_viol, color="tab:red", linewidth=1.5, label="Max")
-    axs[1,0].axhline(y=early_stop_tol, color="red", linestyle="--", alpha=0.7, label="Early stop threshold")
+    
+    # Only show threshold line if early stopping is actually enabled
+    if early_stopping_enabled:
+        axs[1,0].axhline(y=early_stop_tol, color="red", linestyle="--", alpha=0.7, label="Early stop threshold")
+    else:
+        # Show feasible threshold instead (what actually matters)
+        axs[1,0].axhline(y=feasible_threshold, color="green", linestyle="--", alpha=0.7, label="Feasible threshold")
+    
     axs[1,0].set_title("Violations (log scale)", fontsize=12, fontweight='bold')
     axs[1,0].grid(alpha=.3, which="both")
     axs[1,0].legend()
@@ -313,8 +319,8 @@ if __name__ == "__main__":
     base = os.path.splitext(os.path.basename(args.file))[0]
     loss_hist, span_hist, viol_hist, lambda_hist, gnorm_hist, max_viol_hist = histories
     
-    save_convergence(loss_hist, span_hist, viol_hist, lambda_hist, gnorm_hist, 
-                    max_viol_hist, f"figs/{base}_conv.png", sched.early_stop_tol)
+    save_convergence(loss_hist, span_hist, lambda_hist, gnorm_hist, 
+                    max_viol_hist, f"figs/{base}_conv.png", sched.early_stop_tol, sched.enable_early_stopping, sched.feasible_threshold)
     
     save_gantt(sched.solution(), names, sched.durations.cpu().numpy(), 
                f"figs/{base}_gantt.png")
