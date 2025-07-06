@@ -59,9 +59,9 @@ class SolutionAnalyzer:
         # Create comprehensive metrics
         metrics = {
             'final_solution': {
-                'makespan': float(sol['makespan']),
-                'max_violation': final_max_viol,
-                'mean_violation': final_mean_viol,
+                'makespan': round(float(sol['makespan']), 3),
+                'max_violation': round(final_max_viol, 6),
+                'mean_violation': round(final_mean_viol, 6),
                 'feasible': bool(final_max_viol < 1e-6),
                 'solution_epoch': int(best_viol_epoch),
                 'total_epochs_run': len(span_hist),
@@ -81,7 +81,7 @@ class SolutionAnalyzer:
         """Save comprehensive solution record"""
         sol = self.scheduler.solution()
         
-        # Create solution record
+        # Create solution record with reasonable precision (3 decimal places)
         solution_record = {
             'metadata': {
                 'project_file': self.project_file,
@@ -89,19 +89,19 @@ class SolutionAnalyzer:
                 'solver': 'DatalessProjectScheduler',
                 'version': '1.0'
             },
-                         'solution': {
-                 'start_times': {name: float(sol['start'][i]) for i, name in enumerate(self.names)},
-                 'finish_times': {name: float(sol['end'][i]) for i, name in enumerate(self.names)},
-                 'makespan': float(sol['makespan'])
-             },
+            'solution': {
+                'start_times': {name: round(float(sol['start'][i]), 3) for i, name in enumerate(self.names)},
+                'finish_times': {name: round(float(sol['end'][i]), 3) for i, name in enumerate(self.names)},
+                'makespan': round(float(sol['makespan']), 3)
+            },
             'metrics': metrics,
             'activity_schedule': [
-                                 {
-                     'name': name,
-                     'start': float(sol['start'][i]),
-                     'finish': float(sol['end'][i]),
-                     'duration': float(self.scheduler.durations[i])
-                 }
+                {
+                    'name': name,
+                    'start': round(float(sol['start'][i]), 3),
+                    'finish': round(float(sol['end'][i]), 3),
+                    'duration': float(self.scheduler.durations[i])
+                }
                 for i, name in enumerate(self.names)
                 if self.scheduler.durations[i] > 0  # Only include real activities
             ]

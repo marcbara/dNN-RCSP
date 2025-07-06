@@ -187,14 +187,12 @@ class DatalessProjectScheduler:
                     if very_recent > less_recent * self.recovery_sensitivity and self.penalty < PENALTY_CAP:
                         old_penalty = self.penalty
                         self.penalty = min(self.penalty * 2, PENALTY_CAP)
-                        if verbose and ep % 20 == 0:
-                            print(f"    λ RECOVERY: {old_penalty:.1e} → {self.penalty:.1e} (violations increasing)")
+
                     # If violations are small and stable, reduce penalty (with safety valve)
                     elif recent_avg < self.violation_reduction_threshold:
                         old_penalty = self.penalty
                         self.penalty = max(self.penalty * self.penalty_reduction_factor, min_penalty)
-                        if verbose and old_penalty != self.penalty and ep % 50 == 0:
-                            print(f"    λ reduced: {old_penalty:.1e} → {self.penalty:.1e} (violations < {self.violation_reduction_threshold})")
+
                     # If violations are moderate to large, escalate aggressively
                     elif viol_mean.item() > self.violation_escalation_threshold and self.penalty < PENALTY_CAP:
                         self.penalty *= 2
@@ -238,8 +236,6 @@ class DatalessProjectScheduler:
                     'mean_violation': viol_mean.item()
                 }
                 self.feasible_candidates.append(candidate)
-                if verbose and ep % 50 == 0:
-                    print(f"    ✓ Feasible candidate stored: epoch {ep}, makespan {current_sol['makespan']:.3f}")
             
             if self.enable_early_stopping and max_viol < self.early_stop_tol:
                 if verbose:
