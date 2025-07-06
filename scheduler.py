@@ -32,14 +32,30 @@ class DatalessProjectScheduler:
         penalty_anneal=1.5,        # multiply λ every `anneal_every` epochs
         anneal_every=50,
         early_stop_tol=1e-6,        # early stopping when max violation < this
-        enable_early_stopping=True,  # easy switch to disable early stopping
-        penalty_reduction_factor=0.9,   # conservative reduction rate when violations stable
+        enable_early_stopping=False,  # easy switch to disable early stopping
+        penalty_reduction_factor=0.8,   # more aggressive reduction rate when violations stable
         lookback_window=20,       # epochs to look back for trend analysis
+        violation_reduction_threshold=0.001,  # reduce λ only when violations < this
+        violation_escalation_threshold=0.01,  # escalate λ when violations > this
+        recovery_sensitivity=2.0,  # trigger recovery when violations increase by this factor
+        beta_sharpening_threshold=2.0,  # trigger β doubling when violations < this
+        penalty_beta_threshold=1000,  # trigger β doubling when λ > this
+        trend_window=10,           # epochs to look back for recovery detection
+        min_history_for_recovery=30,  # minimum epochs before recovery mechanism activates
         device="cpu"
     ):
         """
         durations   : list/array of activity durations
         precedences : list of (pred_idx, succ_idx) tuples
+        
+        Key hyperparameters for adaptive penalty method:
+        - violation_reduction_threshold: reduce λ only when violations < this (default: 0.001)
+        - violation_escalation_threshold: escalate λ when violations > this (default: 0.01)
+        - recovery_sensitivity: trigger recovery when violations increase by this factor (default: 2.0)
+        - beta_sharpening_threshold: trigger β doubling when violations < this (default: 2.0)
+        - penalty_beta_threshold: trigger β doubling when λ > this (default: 1000)
+        - trend_window: epochs to look back for recovery detection (default: 10)
+        - min_history_for_recovery: minimum epochs before recovery mechanism activates (default: 30)
         """
         self.device     = torch.device(device)                # store once
         self.durations  = torch.as_tensor(durations, dtype=torch.float32).to(self.device)
@@ -65,6 +81,13 @@ class DatalessProjectScheduler:
         # Simple parameters for all problems
         self.penalty_reduction_factor = penalty_reduction_factor
         self.lookback_window = lookback_window
+        self.violation_reduction_threshold = violation_reduction_threshold
+        self.violation_escalation_threshold = violation_escalation_threshold
+        self.recovery_sensitivity = recovery_sensitivity
+        self.beta_sharpening_threshold = beta_sharpening_threshold
+        self.penalty_beta_threshold = penalty_beta_threshold
+        self.trend_window = trend_window
+        self.min_history_for_recovery = min_history_for_recovery
 
         # adaptive penalty tracking
         self.viol_history = []
@@ -150,38 +173,37 @@ class DatalessProjectScheduler:
                 
                 # Simple robust logic with safety valve and recovery
                 min_penalty = self.penalty_init * 10  # Simple safety valve
-                trend_window = 10  # Simple fixed window
                 
                 # Check if violations are trending upward (need recovery)
-                if len(self.viol_history) >= 30:  # Simple fixed history requirement
-                    very_recent = sum(self.viol_history[-trend_window:]) / trend_window
-                    less_recent = sum(self.viol_history[-2*trend_window:-trend_window]) / trend_window
+                if len(self.viol_history) >= self.min_history_for_recovery:
+                    very_recent = sum(self.viol_history[-self.trend_window:]) / self.trend_window
+                    less_recent = sum(self.viol_history[-2*self.trend_window:-self.trend_window]) / self.trend_window
                     
                     # If violations are increasing, boost λ immediately (RECOVERY MODE)
-                    if very_recent > less_recent * 1.5 and self.penalty < PENALTY_CAP:
+                    if very_recent > less_recent * self.recovery_sensitivity and self.penalty < PENALTY_CAP:
                         old_penalty = self.penalty
                         self.penalty = min(self.penalty * 2, PENALTY_CAP)
                         if verbose and ep % 20 == 0:
                             print(f"    λ RECOVERY: {old_penalty:.1e} → {self.penalty:.1e} (violations increasing)")
                     # If violations are small and stable, reduce penalty (with safety valve)
-                    elif recent_avg < 0.1:  # Simple fixed threshold
+                    elif recent_avg < self.violation_reduction_threshold:
                         old_penalty = self.penalty
                         self.penalty = max(self.penalty * self.penalty_reduction_factor, min_penalty)
                         if verbose and old_penalty != self.penalty and ep % 50 == 0:
-                            print(f"    λ reduced: {old_penalty:.1e} → {self.penalty:.1e} (violations < 0.1)")
-                    # If violations are large, escalate as usual
-                    elif viol_mean.item() > 1.0 and self.penalty < PENALTY_CAP:
+                            print(f"    λ reduced: {old_penalty:.1e} → {self.penalty:.1e} (violations < {self.violation_reduction_threshold})")
+                    # If violations are moderate to large, escalate aggressively
+                    elif viol_mean.item() > self.violation_escalation_threshold and self.penalty < PENALTY_CAP:
                         self.penalty *= 2
                 # Standard escalation for early epochs
-                elif viol_mean.item() > 1.0 and self.penalty < PENALTY_CAP:
+                elif viol_mean.item() > self.violation_escalation_threshold and self.penalty < PENALTY_CAP:
                     self.penalty *= 2
             else:
                 # Very early epochs (before lookback window): use original escalation logic
-                if viol_mean.item() > 1.0 and self.penalty < PENALTY_CAP:
+                if viol_mean.item() > self.violation_escalation_threshold and self.penalty < PENALTY_CAP:
                     self.penalty *= 2
 
             # ── 2️⃣  β sharpening  (as soon as λ big OR slack small) ──────────
-            if ((self.penalty > 1_000) or (viol_mean.item() < 2.0)) and self.beta < 1e4:
+            if ((self.penalty > self.penalty_beta_threshold) or (viol_mean.item() < self.beta_sharpening_threshold)) and self.beta < 1e4:
                 self.beta *= 2
 
             # ── 3️⃣  LR reheating once λ has frozen  ──────────────────────────
