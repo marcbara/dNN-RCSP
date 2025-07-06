@@ -148,69 +148,73 @@ Optional:
 
 ### Terminal Output
 ```
-Loading project: mini7.json
-Activities: 9, Precedences: 11
+Loading project: realistic20.json
+Activities: 21, Precedences: 25
 
-ep    0 | span   4.00 | viol 1.23e+00 | λ 2.0e+01 | ∥grad∥ 1.52
-ep  100 | span   8.84 | viol 0.00e+00 | λ 9.2e+06 | ∥grad∥ 1.00
-ep  200 | span   8.27 | viol 0.00e+00 | λ 2.1e+07 | ∥grad∥ 1.00
+ep    0 | span  10.00 | viol 3.45e+00 | λ 2.0e+01 | ∥grad∥ 2.14
+ep  100 | span  35.20 | viol 2.10e+00 | λ 1.3e+08 | ∥grad∥ 10.00
+ep  200 | span  42.15 | viol 5.23e-02 | λ 1.3e+08 | ∥grad∥ 10.00
+ep  300 | span  40.85 | viol 2.14e-06 | λ 4.2e+07 | ∥grad∥ 8.50
 
-📊 Found 177 feasible candidates
-   Best makespan: 8.130 at epoch 225
-   Makespan range: 8.130 - 8.874
-✓ BEST SOLUTION: epoch 225, makespan 8.130, max_viol 0.00e+00
+📊 Found 45 feasible candidates
+   Best makespan: 40.000 at epoch 347
+   Makespan range: 40.000 - 40.950
+✓ BEST SOLUTION: epoch 347, makespan 40.000, max_viol 0.00e+00
 
 ======================================================================
                       SOLUTION SUMMARY
 ======================================================================
-Final makespan:        8.130
+Final makespan:        40.000
 Max violation:         0.00e+00
 Mean violation:        0.00e+00
 Feasible:              ✓ YES
-Solution epoch:        225
-Total epochs run:      300
-Feasible candidates:   177
+Solution epoch:        347
+Total epochs run:      400
+Feasible candidates:   45
 
 Problem characteristics:
-Total activities:      9
-Active activities:     7
-Max activity duration: 4.0
-Total work content:    17.0
+Total activities:      21
+Active activities:     19
+Max activity duration: 8.0
+Total work content:    95.0
 ======================================================================
 
-[saved] figs/mini7_conv.png
-[saved] figs/mini7_gantt.png
+[saved] figs/realistic20_conv.png
+[saved] figs/realistic20_gantt.png
 
-All outputs saved with 'mini7' prefix
+All outputs saved with 'realistic20' prefix
 ```
 
 ### Generated Files
 
-**Solution File** (`solutions/mini7_solution.json`):
+**Solution File** (`solutions/realistic20_solution.json`):
 ```json
 {
   "metadata": {
-    "project_file": "mini7.json",
-    "timestamp": "2025-07-06T17:58:27.745585",
+    "project_file": "realistic20.json",
+    "timestamp": "2025-07-06T18:15:42.123456",
     "solver": "DatalessProjectScheduler",
     "version": "1.0"
   },
   "solution": {
     "start_times": {
-      "A": 0.048,
-      "B": 0.047, 
-      "C": 0.082,
-      "G": 6.126
+      "START": 0.0,
+      "Planning": 0.0,
+      "Design": 5.0,
+      "Development": 13.0,
+      "Testing": 25.0,
+      "Deployment": 35.0,
+      "END": 40.0
     },
-    "makespan": 8.13
+    "makespan": 40.0
   },
   "metrics": {
     "final_solution": {
-      "makespan": 8.13,
+      "makespan": 40.0,
       "max_violation": 0.0,
       "feasible": true,
-      "solution_epoch": 225,
-      "feasible_candidates_found": 177
+      "solution_epoch": 347,
+      "feasible_candidates_found": 45
     }
   }
 }
@@ -240,9 +244,9 @@ python psplib_converter.py j30.sm/ --output-dir j30_json/
 - **Typical results**: 38-45 makespan for j301_x instances
 
 **Example Results**:
-- `j301_1`: 38.6 makespan (177 feasible candidates found)
+- `j301_1`: 38.6 makespan (23 feasible candidates found)
 - `mini7`: 8.13 makespan vs 8.0 optimal (1.6% gap)
-- `realistic20`: 40.0 makespan (optimal achieved)
+- `realistic20`: 40.0 makespan (45 feasible candidates, optimal achieved)
 
 ## Algorithm Insights
 
