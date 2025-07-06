@@ -35,8 +35,8 @@ class DatalessProjectScheduler:
         enable_early_stopping=False,  # easy switch to disable early stopping
         penalty_reduction_factor=0.8,   # more aggressive reduction rate when violations stable
         lookback_window=20,       # epochs to look back for trend analysis
-        violation_reduction_threshold=0.001,  # reduce λ only when violations < this
-        violation_escalation_threshold=0.01,  # escalate λ when violations > this
+        violation_reduction_threshold=0.0001,  # reduce λ only when violations < this
+        violation_escalation_threshold=0.001,  # escalate λ when violations > this
         recovery_sensitivity=2.0,  # trigger recovery when violations increase by this factor
         beta_sharpening_threshold=2.0,  # trigger β doubling when violations < this
         penalty_beta_threshold=1000,  # trigger β doubling when λ > this
