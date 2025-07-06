@@ -1,0 +1,278 @@
+{
+  "metadata": {
+    "project_file": "j30_json/j301_1.json",
+    "timestamp": "2025-07-06T17:53:28.030613",
+    "solver": "DatalessProjectScheduler",
+    "version": "1.0"
+  },
+  "solution": {
+    "start_times": {
+      "START": 0.0,
+      "Activity_1": 0.003340573748573661,
+      "Activity_2": 0.0010281824506819248,
+      "Activity_3": 0.0019115605391561985,
+      "Activity_4": 6.020759105682373,
+      "Activity_5": 8.22883129119873,
+      "Activity_6": 4.004515171051025,
+      "Activity_7": 4.121705532073975,
+      "Activity_8": 6.115673542022705,
+      "Activity_9": 6.025875568389893,
+      "Activity_10": 8.205361366271973,
+      "Activity_11": 13.142770767211914,
+      "Activity_12": 4.220537185668945,
+      "Activity_13": 15.196578025817871,
+      "Activity_14": 8.209431648254395,
+      "Activity_15": 13.11539363861084,
+      "Activity_16": 18.268848419189453,
+      "Activity_17": 10.337032318115234,
+      "Activity_18": 14.60693645477295,
+      "Activity_19": 17.257469177246094,
+      "Activity_20": 23.256505966186523,
+      "Activity_21": 24.280229568481445,
+      "Activity_22": 31.36680030822754,
+      "Activity_23": 33.36928939819336,
+      "Activity_24": 24.389127731323242,
+      "Activity_25": 17.270524978637695,
+      "Activity_26": 14.888775825500488,
+      "Activity_27": 25.300247192382812,
+      "Activity_28": 18.32308578491211,
+      "Activity_29": 36.411190032958984,
+      "Activity_30": 28.535934448242188,
+      "END": 38.395877838134766
+    },
+    "finish_times": {
+      "START": 0.0,
+      "Activity_1": 8.003340721130371,
+      "Activity_2": 4.001028060913086,
+      "Activity_3": 6.001911640167236,
+      "Activity_4": 9.020759582519531,
+      "Activity_5": 16.228832244873047,
+      "Activity_6": 9.004514694213867,
+      "Activity_7": 13.121706008911133,
+      "Activity_8": 8.115673065185547,
+      "Activity_9": 13.025875091552734,
+      "Activity_10": 17.205360412597656,
+      "Activity_11": 15.142770767211914,
+      "Activity_12": 10.220537185668945,
+      "Activity_13": 18.196578979492188,
+      "Activity_14": 17.209430694580078,
+      "Activity_15": 23.115394592285156,
+      "Activity_16": 24.268848419189453,
+      "Activity_17": 15.337032318115234,
+      "Activity_18": 17.606937408447266,
+      "Activity_19": 24.257469177246094,
+      "Activity_20": 25.256505966186523,
+      "Activity_21": 31.280229568481445,
+      "Activity_22": 33.366798400878906,
+      "Activity_23": 36.36928939819336,
+      "Activity_24": 27.389127731323242,
+      "Activity_25": 24.270524978637695,
+      "Activity_26": 22.888774871826172,
+      "Activity_27": 28.300247192382812,
+      "Activity_28": 25.32308578491211,
+      "Activity_29": 38.411190032958984,
+      "Activity_30": 30.535934448242188,
+      "END": 38.395877838134766
+    },
+    "makespan": 38.411190032958984
+  },
+  "metrics": {
+    "final_solution": {
+      "makespan": 38.411190032958984,
+      "max_violation": 0.0,
+      "mean_violation": 0.0,
+      "feasible": true,
+      "solution_epoch": 1121,
+      "total_epochs_run": 3000,
+      "feasible_candidates_found": 903
+    },
+    "resource_analysis": {
+      "total_activities": 32,
+      "activities_with_duration": 30,
+      "max_activity_duration": 10.0,
+      "total_work_content": 158.0
+    }
+  },
+  "activity_schedule": [
+    {
+      "name": "Activity_1",
+      "start": 0.003340573748573661,
+      "finish": 8.003340721130371,
+      "duration": 8.0
+    },
+    {
+      "name": "Activity_2",
+      "start": 0.0010281824506819248,
+      "finish": 4.001028060913086,
+      "duration": 4.0
+    },
+    {
+      "name": "Activity_3",
+      "start": 0.0019115605391561985,
+      "finish": 6.001911640167236,
+      "duration": 6.0
+    },
+    {
+      "name": "Activity_4",
+      "start": 6.020759105682373,
+      "finish": 9.020759582519531,
+      "duration": 3.0
+    },
+    {
+      "name": "Activity_5",
+      "start": 8.22883129119873,
+      "finish": 16.228832244873047,
+      "duration": 8.0
+    },
+    {
+      "name": "Activity_6",
+      "start": 4.004515171051025,
+      "finish": 9.004514694213867,
+      "duration": 5.0
+    },
+    {
+      "name": "Activity_7",
+      "start": 4.121705532073975,
+      "finish": 13.121706008911133,
+      "duration": 9.0
+    },
+    {
+      "name": "Activity_8",
+      "start": 6.115673542022705,
+      "finish": 8.115673065185547,
+      "duration": 2.0
+    },
+    {
+      "name": "Activity_9",
+      "start": 6.025875568389893,
+      "finish": 13.025875091552734,
+      "duration": 7.0
+    },
+    {
+      "name": "Activity_10",
+      "start": 8.205361366271973,
+      "finish": 17.205360412597656,
+      "duration": 9.0
+    },
+    {
+      "name": "Activity_11",
+      "start": 13.142770767211914,
+      "finish": 15.142770767211914,
+      "duration": 2.0
+    },
+    {
+      "name": "Activity_12",
+      "start": 4.220537185668945,
+      "finish": 10.220537185668945,
+      "duration": 6.0
+    },
+    {
+      "name": "Activity_13",
+      "start": 15.196578025817871,
+      "finish": 18.196578979492188,
+      "duration": 3.0
+    },
+    {
+      "name": "Activity_14",
+      "start": 8.209431648254395,
+      "finish": 17.209430694580078,
+      "duration": 9.0
+    },
+    {
+      "name": "Activity_15",
+      "start": 13.11539363861084,
+      "finish": 23.115394592285156,
+      "duration": 10.0
+    },
+    {
+      "name": "Activity_16",
+      "start": 18.268848419189453,
+      "finish": 24.268848419189453,
+      "duration": 6.0
+    },
+    {
+      "name": "Activity_17",
+      "start": 10.337032318115234,
+      "finish": 15.337032318115234,
+      "duration": 5.0
+    },
+    {
+      "name": "Activity_18",
+      "start": 14.60693645477295,
+      "finish": 17.606937408447266,
+      "duration": 3.0
+    },
+    {
+      "name": "Activity_19",
+      "start": 17.257469177246094,
+      "finish": 24.257469177246094,
+      "duration": 7.0
+    },
+    {
+      "name": "Activity_20",
+      "start": 23.256505966186523,
+      "finish": 25.256505966186523,
+      "duration": 2.0
+    },
+    {
+      "name": "Activity_21",
+      "start": 24.280229568481445,
+      "finish": 31.280229568481445,
+      "duration": 7.0
+    },
+    {
+      "name": "Activity_22",
+      "start": 31.36680030822754,
+      "finish": 33.366798400878906,
+      "duration": 2.0
+    },
+    {
+      "name": "Activity_23",
+      "start": 33.36928939819336,
+      "finish": 36.36928939819336,
+      "duration": 3.0
+    },
+    {
+      "name": "Activity_24",
+      "start": 24.389127731323242,
+      "finish": 27.389127731323242,
+      "duration": 3.0
+    },
+    {
+      "name": "Activity_25",
+      "start": 17.270524978637695,
+      "finish": 24.270524978637695,
+      "duration": 7.0
+    },
+    {
+      "name": "Activity_26",
+      "start": 14.888775825500488,
+      "finish": 22.888774871826172,
+      "duration": 8.0
+    },
+    {
+      "name": "Activity_27",
+      "start": 25.300247192382812,
+      "finish": 28.300247192382812,
+      "duration": 3.0
+    },
+    {
+      "name": "Activity_28",
+      "start": 18.32308578491211,
+      "finish": 25.32308578491211,
+      "duration": 7.0
+    },
+    {
+      "name": "Activity_29",
+      "start": 36.411190032958984,
+      "finish": 38.411190032958984,
+      "duration": 2.0
+    },
+    {
+      "name": "Activity_30",
+      "start": 28.535934448242188,
+      "finish": 30.535934448242188,
+      "duration": 2.0
+    }
+  ]
+}

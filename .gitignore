@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv
+.env
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# PyCharm
+.idea/
+
+# VSCode
+.vscode/
+
+# PSPLIB Instance Sets (large benchmark files)
+j30.sm/
+j60.sm/
+j90.sm/
+j120.sm/
+j30.mm/
+j60.mm/
+j90.mm/
+j120.mm/
+*.sm.tgz
+converted_instances/
+psplib_instances/
+j30_json/
+j60_json/
+j90_json/
+j120_json/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db 

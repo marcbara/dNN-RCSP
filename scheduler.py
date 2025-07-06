@@ -91,6 +91,10 @@ class DatalessProjectScheduler:
 
         # adaptive penalty tracking
         self.viol_history = []
+        
+        # feasible solution tracking
+        self.feasible_candidates = []
+        self.feasible_threshold = 1e-6  # Store candidates when max_viol < this
 
         # utility: index of START assumed 0
         self.start_idx = 0
@@ -218,9 +222,25 @@ class DatalessProjectScheduler:
             lambda_hist.append(self.penalty)
             gnorm_hist.append(gnorm)
 
-            # ── 4️⃣  Early stopping when MAX violation is tiny ─────────────────
+            # ── 4️⃣  Store feasible candidates and early stopping ─────────────────
             max_viol = torch.max(viol_raw).item()
             max_viol_hist.append(max_viol)
+            
+            # Store feasible candidate when violations are essentially zero
+            if max_viol < self.feasible_threshold:
+                current_sol = self.solution()
+                candidate = {
+                    'epoch': ep,
+                    'makespan': current_sol['makespan'],
+                    'start_times': current_sol['start'].copy(),
+                    'end_times': current_sol['end'].copy(),
+                    'max_violation': max_viol,
+                    'mean_violation': viol_mean.item()
+                }
+                self.feasible_candidates.append(candidate)
+                if verbose and ep % 50 == 0:
+                    print(f"    ✓ Feasible candidate stored: epoch {ep}, makespan {current_sol['makespan']:.3f}")
+            
             if self.enable_early_stopping and max_viol < self.early_stop_tol:
                 if verbose:
                     print(f"Early stopping at epoch {ep}: max violation {max_viol:.3f} < {self.early_stop_tol} time units")
@@ -231,13 +251,76 @@ class DatalessProjectScheduler:
                     f"viol {viol_mean.item():.2e} | λ {self.penalty:.1e} | "
                     f"∥grad∥ {gnorm:.2f}")
 
+        # ── 5️⃣  Select and restore best feasible candidate ─────────────────
+        selected_candidate = self.select_best_candidate(verbose)
+        if selected_candidate is not None:
+            self.restore_candidate(selected_candidate)
+            # Store the best candidate as the current solution state
+            self.best_solution = selected_candidate
+            if verbose:
+                print(f"✓ BEST SOLUTION: epoch {selected_candidate['epoch']}, "
+                      f"makespan {selected_candidate['makespan']:.3f}, "
+                      f"max_viol {selected_candidate['max_violation']:.2e}")
+        else:
+            # No feasible candidates - use current solution
+            self.best_solution = None
+
         return (loss_hist, span_hist, viol_hist, lambda_hist, gnorm_hist, max_viol_hist)
 
-
-
+    def select_best_candidate(self, verbose=True):
+        """Select the best feasible candidate (minimum makespan among feasible solutions)"""
+        if not self.feasible_candidates:
+            if verbose:
+                print("⚠ No feasible candidates found - using final solution")
+            return None
+        
+        # Among feasible solutions, select the one with minimum makespan
+        best_candidate = min(self.feasible_candidates, key=lambda x: x['makespan'])
+        
+        if verbose:
+            print(f"📊 Found {len(self.feasible_candidates)} feasible candidates")
+            print(f"   Best makespan: {best_candidate['makespan']:.3f} at epoch {best_candidate['epoch']}")
+            makespan_range = (
+                min(c['makespan'] for c in self.feasible_candidates),
+                max(c['makespan'] for c in self.feasible_candidates)
+            )
+            print(f"   Makespan range: {makespan_range[0]:.3f} - {makespan_range[1]:.3f}")
+        
+        return best_candidate
+    
+    def restore_candidate(self, candidate):
+        """Restore the scheduler state to the given candidate solution"""
+        with torch.no_grad():
+            # Calculate raw_times from start_times (reverse the _start_times transformation)
+            start_times = torch.tensor(candidate['start_times'], device=self.device, dtype=torch.float32)
+            
+            # Since _start_times does: softplus(raw_times) - min(softplus(raw_times))
+            # We need to find raw_times that produce the desired start_times
+            # Simple approach: use inverse softplus (log(exp(x) - 1)) and add offset
+            
+            # Add small offset to avoid log(0)
+            start_times_offset = start_times + 1e-8
+            
+            # Inverse softplus: log(exp(x) - 1) ≈ x for large x, log(x) for small x
+            # For numerical stability, we'll use a simpler approach
+            raw_times_est = torch.log(torch.exp(start_times_offset) - 1.0 + 1e-8)
+            
+            # Update the raw_times parameter
+            self.raw_times.data = raw_times_est
 
     # ---- utilities ------------------------------------------------------
     def solution(self):
+        # If we have a best solution from feasible candidates, use it
+        if hasattr(self, 'best_solution') and self.best_solution is not None:
+            return {
+                'start': self.best_solution['start_times'],
+                'end': self.best_solution['end_times'],
+                'makespan': self.best_solution['makespan'],
+                'max_violation': self.best_solution['max_violation'],
+                'mean_violation': self.best_solution['mean_violation']
+            }
+        
+        # Otherwise, calculate from current state
         with torch.no_grad():
             s = self._start_times().cpu().numpy()
             e = s + self.durations.cpu().numpy()
