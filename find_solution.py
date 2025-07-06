@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-test_file_enhanced.py
-Enhanced version with professional solution tracking and output.
+find_solution.py
+
 """
 
 import os, sys, argparse, matplotlib, json
@@ -314,10 +314,10 @@ if __name__ == "__main__":
     loss_hist, span_hist, viol_hist, lambda_hist, gnorm_hist, max_viol_hist = histories
     
     save_convergence(loss_hist, span_hist, viol_hist, lambda_hist, gnorm_hist, 
-                    max_viol_hist, f"figs/{base}_enhanced_conv.png", sched.early_stop_tol)
+                    max_viol_hist, f"figs/{base}_conv.png", sched.early_stop_tol)
     
     save_gantt(sched.solution(), names, sched.durations.cpu().numpy(), 
-               f"figs/{base}_enhanced_gantt.png")
+               f"figs/{base}_gantt.png")
     
-    print(f"\nAll outputs saved with '{base}_enhanced' prefix")
+    print(f"\nAll outputs saved with '{base}' prefix")
     print("Use --save-solution to save JSON, --detailed-schedule for full schedule") 
