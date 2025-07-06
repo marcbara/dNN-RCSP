@@ -31,7 +31,8 @@ class DatalessProjectScheduler:
         penalty_init=10.0,         # initial λ for precedence violations
         penalty_anneal=1.5,        # multiply λ every `anneal_every` epochs
         anneal_every=50,
-        early_stop_tol=1e-8,        # early stopping when max violation < this
+        early_stop_tol=1e-6,        # early stopping when max violation < this
+        enable_early_stopping=True,  # easy switch to disable early stopping
         penalty_reduction_factor=0.9,   # conservative reduction rate when violations stable
         lookback_window=20,       # epochs to look back for trend analysis
         device="cpu"
@@ -59,6 +60,7 @@ class DatalessProjectScheduler:
         self.penalty_anneal = penalty_anneal
         self.anneal_every = anneal_every
         self.early_stop_tol = early_stop_tol
+        self.enable_early_stopping = enable_early_stopping
         
         # Simple parameters for all problems
         self.penalty_reduction_factor = penalty_reduction_factor
@@ -110,7 +112,7 @@ class DatalessProjectScheduler:
         * λ escalates when violations are large, reduces when stable and small
         * β doubles once λ is large OR violations are small
         * LR is gently reheated after λ saturates to avoid Adam stalls
-        * Early stopping when MAX individual violation < early_stop_tol time units
+        * Early stopping when enable_early_stopping=True and MAX individual violation < early_stop_tol time units
         """
         opt = torch.optim.Adam([self.raw_times], lr=lr)
 
@@ -197,7 +199,7 @@ class DatalessProjectScheduler:
             # ── 4️⃣  Early stopping when MAX violation is tiny ─────────────────
             max_viol = torch.max(viol_raw).item()
             max_viol_hist.append(max_viol)
-            if max_viol < self.early_stop_tol:
+            if self.enable_early_stopping and max_viol < self.early_stop_tol:
                 if verbose:
                     print(f"Early stopping at epoch {ep}: max violation {max_viol:.3f} < {self.early_stop_tol} time units")
                 break
